@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#efe2cf" />
+    <meta name="description" content="刘丹池的个人作品集，欢迎来到我的小世界。" />
+    <title>刘丹池 · 我的小世界</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" />
+    <link rel="preload" as="image" href="assets/bg-front-view.jpg" />
+    <link rel="preload" as="image" href="assets/bg-top-view-clean.jpg" />
+    <link rel="preload" as="image" href="assets/book.png" />
+    <link rel="preload" as="image" href="assets/phone.png" />
+    <link rel="preload" as="image" href="assets/folder.png" />
+    <link rel="stylesheet" href="style.css" />
+
+    <script>
+      document.documentElement.classList.add('js');
+      window.setTimeout(function () {
+        if (!window.gsap) document.documentElement.classList.add('is-fallback');
+      }, 1800);
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"
+      defer
+      onerror="document.documentElement.classList.add('gsap-failed')"
+    ></script>
+    <script src="script.js" defer></script>
+  </head>
+
+  <body>
+    <main class="experience" id="experience" data-scene="front">
+      <section class="scene scene--front" id="frontView" aria-labelledby="introName">
+        <div class="scene__bg scene__bg--front" aria-hidden="true"></div>
+        <div class="scene__vignette" aria-hidden="true"></div>
+
+        <div class="intro" id="intro">
+          <div class="intro__panel intro__panel--left">
+            <h1 class="intro__name" id="introName" aria-label="刘丹池">
+              <span class="intro__type-target" data-typewriter="刘丹池" aria-hidden="true">刘丹池</span>
+              <span class="intro__caret" aria-hidden="true"></span>
+            </h1>
+            <p class="intro__roman" aria-label="LIUDANCHI">
+              <span class="intro__type-target" data-typewriter="LIUDANCHI" aria-hidden="true">LIUDANCHI</span>
+              <span class="intro__caret" aria-hidden="true"></span>
+            </p>
+          </div>
+          <div class="intro__panel intro__panel--right">
+            <button class="intro__cta" id="enterDesk" type="button" aria-label="进入俯视桌面">
+              <span>欢迎来到我的小世界！</span>
+              <span class="intro__arrow" aria-hidden="true">➔</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="scene scene--desk"
+        id="deskView"
+        aria-label="俯视桌面，可以拖动物品；向下滚动或按 Esc 返回"
+        aria-hidden="true"
+        tabindex="-1"
+      >
+        <div class="scene__bg scene__bg--desk" aria-hidden="true"></div>
+        <div class="scene__vignette scene__vignette--desk" aria-hidden="true"></div>
+
+        <div class="desk-objects">
+          <button class="desk-item desk-item--book" type="button" aria-label="打开手账本相册，也可以拖动" aria-roledescription="可拖动物件">
+            <img class="desk-item__art" src="assets/book.png" width="484" height="484" alt="" draggable="false" />
+          </button>
+          <button class="desk-item desk-item--phone" type="button" aria-label="打开手机视频作品，也可以拖动" aria-roledescription="可拖动物件">
+            <img class="desk-item__art" src="assets/phone.png" width="780" height="1614" alt="" draggable="false" />
+          </button>
+          <button class="desk-item desk-item--folder" type="button" aria-label="打开文件袋里的文字作品，也可以拖动" aria-roledescription="可拖动物件">
+            <img class="desk-item__art" src="assets/folder.png" width="500" height="500" alt="" draggable="false" />
+          </button>
+        </div>
+
+        <button class="desk-hint" id="deskHint" type="button" aria-label="返回平视界面">
+          <span>拖一拖这些小物件</span>
+          <span class="desk-hint__divider" aria-hidden="true">·</span>
+          <span>向下滚动 / ESC 返回</span>
+        </button>
+      </section>
+
+      <section class="gallery" id="photoGallery" aria-hidden="true">
+        <div class="gallery__backdrop" id="galleryBackdrop" aria-hidden="true"></div>
+        <div class="gallery__stage">
+          <article
+            class="gallery__book"
+            id="galleryBook"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="galleryTitle"
+          >
+            <header class="gallery__toolbar">
+              <div class="gallery__heading">
+                <p class="gallery__eyebrow">MY LITTLE MOMENTS</p>
+                <h2 class="gallery__title" id="galleryTitle">人像摄影</h2>
+              </div>
+              <div class="gallery__actions">
+                <button class="gallery__reset" id="galleryReset" type="button" aria-label="重置所有照片的位置和角度">↺ 重置排版</button>
+                <button class="gallery__close" id="galleryClose" type="button" aria-label="合上相册">×</button>
+              </div>
+            </header>
+
+            <div class="gallery__spread" id="gallerySpread">
+              <section class="gallery-page gallery-page--left" id="galleryLeftPage" aria-label="相册左页"></section>
+              <section class="gallery-page gallery-page--right" id="galleryRightPage" aria-label="相册右页"></section>
+            </div>
+
+            <footer class="gallery__footer">
+              <button class="gallery__nav" id="galleryPrev" type="button" aria-label="上一页">←</button>
+              <p class="gallery__page-status" id="galleryPageStatus" aria-live="polite">第 1 / 6 页</p>
+              <button class="gallery__nav" id="galleryNext" type="button" aria-label="下一页">→</button>
+            </footer>
+
+            <button class="gallery__add" id="galleryAdd" type="button">+ 添加照片</button>
+            <input class="gallery__file" id="galleryFile" type="file" accept="image/*" aria-label="选择要添加的照片" />
+            <p class="gallery__notice" id="galleryNotice" role="status" aria-live="polite"></p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="photo-preview"
+        id="photoPreview"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-label="照片预览"
+        tabindex="-1"
+      >
+        <div class="photo-preview__backdrop" id="photoPreviewBackdrop" aria-hidden="true"></div>
+        <div class="photo-preview__stage" id="photoPreviewStage"></div>
+      </section>
+
+      <section
+        class="video-theater"
+        id="videoTheater"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-label="手机视频作品"
+        tabindex="-1"
+      >
+        <div class="video-theater__backdrop" id="videoBackdrop" aria-hidden="true"></div>
+        <div class="video-theater__stage">
+          <div class="video-phone" id="videoPhone" aria-hidden="true">
+            <div class="video-phone__screen" id="videoPhoneScreen">
+              <div class="video-phone__glow" id="videoPhoneGlow" aria-hidden="true"></div>
+            </div>
+            <span class="video-phone__button" aria-hidden="true"></span>
+          </div>
+
+          <div class="video-phone__content" id="videoPhoneContent">
+            <button class="video-back" id="videoBack" type="button" aria-label="暂停视频并返回桌面">&lt;</button>
+
+            <div class="video-player" id="videoPlayer" aria-label="视频作品播放器">
+              <video
+                class="video-player__video"
+                id="videoPlayerElement"
+                preload="auto"
+                playsinline
+                disablepictureinpicture
+                controlslist="nodownload noplaybackrate noremoteplayback"
+              ></video>
+              <span class="video-slide__loader" id="videoLoader" aria-hidden="true">正在装入小世界…</span>
+            </div>
+
+            <div class="video-controls" id="videoControls" aria-hidden="true">
+              <div class="video-controls__top">
+                <p class="video-title" id="videoTitle">01. 剪辑作品</p>
+              </div>
+              <div class="video-controls__bottom">
+                <button class="video-play" id="videoPlay" type="button" aria-label="播放视频">▶</button>
+                <span class="video-time" id="videoCurrentTime">00:00</span>
+                <div
+                  class="video-progress"
+                  id="videoProgress"
+                  role="slider"
+                  aria-label="视频播放进度"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  tabindex="0"
+                >
+                  <span class="video-progress__buffer" id="videoProgressBuffer" aria-hidden="true"></span>
+                  <span class="video-progress__fill" id="videoProgressFill" aria-hidden="true"></span>
+                  <span class="video-progress__thumb" id="videoProgressThumb" aria-hidden="true"></span>
+                </div>
+                <span class="video-time" id="videoDuration">00:00</span>
+                <span class="video-index" id="videoIndex">01 / 06</span>
+                <button
+                  class="video-episode-toggle"
+                  id="videoEpisodeToggle"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="videoEpisodes"
+                >选集</button>
+              </div>
+            </div>
+
+            <div class="video-episodes" id="videoEpisodes" aria-hidden="true">
+              <button
+                class="video-episodes__dismiss"
+                id="videoEpisodesDismiss"
+                type="button"
+                aria-label="收起选集"
+                tabindex="-1"
+              ></button>
+              <section
+                class="video-episodes__panel"
+                id="videoEpisodesPanel"
+                role="dialog"
+                aria-modal="true"
+                aria-label="视频选集"
+              >
+                <header class="video-episodes__header">
+                  <div class="video-episodes__heading">
+                    <span class="video-episodes__kicker">PLAYLIST</span>
+                    <h2 class="video-episodes__title">选集</h2>
+                  </div>
+                  <button class="video-episodes__close" id="videoEpisodesClose" type="button">收起</button>
+                </header>
+                <div class="video-episodes__list" id="videoEpisodeList"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="letter" id="letterView" aria-hidden="true">
+        <div class="letter__backdrop" id="letterBackdrop" aria-hidden="true"></div>
+        <div class="letter__stage">
+          <div class="letter__composition" id="letterComposition">
+            <article
+              class="letter__paper"
+              id="letterPaper"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="letterTitle"
+              tabindex="-1"
+            >
+              <div class="letter__surface">
+                <header class="letter__intro-block" id="letterIntroBlock">
+                  <p class="letter__eyebrow">WORDS FROM LIUDANCHI</p>
+                  <h2 class="letter__title" id="letterTitle">旧作随录</h2>
+                  <p class="letter__copy">一些旧日的文字与剧本</p>
+                </header>
+
+                <div class="letter__categories" id="letterCategories" aria-label="文字作品分类"></div>
+                <p class="letter__peek-hint">轻点信纸外侧，把信收回文件袋</p>
+
+                <section class="letter__reading" id="letterReadingPanel" aria-hidden="true">
+                  <div class="letter__reading-toolbar">
+                    <button class="letter__back" id="letterBack" type="button">← 返回</button>
+                    <p class="letter__reading-kicker" id="letterReadingKicker"></p>
+                  </div>
+                  <h3 class="letter__reading-title" id="letterReadingTitle"></h3>
+                  <div class="letter__reading-body" id="letterReadingBody" tabindex="0"></div>
+                  <p class="letter__reading-status" id="letterReadingStatus" role="status" aria-live="polite"></p>
+                </section>
+              </div>
+            </article>
+
+            <div class="letter__folder" id="letterFolder" aria-hidden="true">
+              <img src="assets/folder.png" width="563" height="564" alt="" draggable="false" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grain" aria-hidden="true"></div>
+      <div class="camera-bloom" id="cameraBloom" aria-hidden="true"></div>
+    </main>
+
+    <aside class="profile-card" id="profileCard" aria-label="刘丹池的个人名片">
+      <div class="profile-card__info">
+        <span class="profile-card__initials corner-label" aria-hidden="true">LDC</span>
+        <div class="profile-card__contacts" id="profileContacts" aria-hidden="true">
+          <a class="profile-card__contact" href="tel:15829649251">
+            <i class="ri-phone-fill" aria-hidden="true"></i>
+            <span>15829649251</span>
+          </a>
+          <a class="profile-card__contact" href="mailto:1405022730@qq.com">
+            <i class="ri-mail-fill" aria-hidden="true"></i>
+            <span>1405022730@qq.com</span>
+          </a>
+        </div>
+      </div>
+      <button
+        class="profile-card__avatar"
+        id="profileAvatar"
+        type="button"
+        aria-label="查看联系方式"
+        aria-expanded="false"
+        aria-controls="profileContacts"
+      >
+        <img src="assets/avatar.jpg" width="50" height="50" alt="刘丹池头像" decoding="async" />
+      </button>
+    </aside>
+
+    <p class="corner-tagline corner-label">留白，期待新故事发生。</p>
+
+    <noscript>
+      <p class="noscript-note">请开启 JavaScript 来体验完整的小世界。</p>
+    </noscript>
+  </body>
+</html>
