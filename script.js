@@ -189,11 +189,11 @@
     { key: '16x9' },
   ];
   const videoWorks = [
-    { category: '剪辑作品', title: '剪辑作品', src: 'works-video/editing-works-ledscreenad.mp4' },
-    { category: '剪辑作品', title: '剪辑作品2', src: 'works-video/editing-works-yesoryeslyrics.mp4' },
+    { category: '剪辑作品', title: '剪辑作品', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/editing-works-ledscreenad.mp4' },
+    { category: '剪辑作品', title: '剪辑作品2', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/editing-works-yesoryeslyrics.mp4' },
     { category: '导演作品', title: '导演作品', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/Directorialworks-C.mp4' },
-    { category: 'C4D动画作品', title: 'C4D动画作品', src: 'works-video/c4d-animation-works-windchimes.mp4' },
-    { category: '广告作品', title: '广告作品1', src: 'works-video/ad-happysnap.mp4' },
+    { category: 'C4D动画作品', title: 'C4D动画作品', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/c4d-animation-works-windchimes.mp4' },
+    { category: '广告作品', title: '广告作品1', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/ad-happysnap.mp4' },
     { category: '广告作品', title: '广告作品2', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/Ad-Watermelonfrost.mp4' },
     { category: '电视新闻专题作品', title: '电视新闻专题作品', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/News-Feature-Rolling.mp4' },
   ];
