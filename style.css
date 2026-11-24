@@ -679,130 +679,6 @@ button {
   gap: 0.55rem;
 }
 
-.gallery__reset {
-  min-height: 2.15rem;
-  padding: 0.45rem 0.78rem 0.5rem;
-  border: 1px solid rgba(94, 64, 48, 0.16);
-  border-radius: 999px;
-  background: rgba(255, 252, 245, 0.7);
-  box-shadow: 0 8px 18px rgba(70, 43, 27, 0.08);
-  color: rgba(75, 50, 39, 0.8);
-  font-size: clamp(0.58rem, 0.72vw, 0.68rem);
-  letter-spacing: 0.06em;
-  line-height: 1;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    transform 0.28s var(--ease-soft),
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.gallery__reset:hover,
-.gallery__reset:focus-visible {
-  border-color: rgba(94, 64, 48, 0.3);
-  background: rgba(255, 253, 248, 0.94);
-  color: rgba(68, 43, 33, 0.94);
-  transform: translateY(-2px);
-}
-
-.gallery__reset:focus-visible {
-  outline: 2px dashed rgba(84, 56, 42, 0.5);
-  outline-offset: 3px;
-}
-
-.gallery__add {
-  position: absolute;
-  right: clamp(0.9rem, 2vw, 1.5rem);
-  bottom: clamp(3.9rem, 6.2vh, 4.9rem);
-  z-index: 4;
-  min-height: 2.25rem;
-  padding: 0.52rem 0.9rem 0.58rem;
-  border: 1px solid rgba(127, 81, 54, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 252, 245, 0.88);
-  box-shadow:
-    0 9px 22px rgba(71, 43, 26, 0.13),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  color: rgba(76, 50, 38, 0.86);
-  font-size: clamp(0.64rem, 0.82vw, 0.76rem);
-  letter-spacing: 0.06em;
-  line-height: 1;
-  white-space: nowrap;
-  cursor: pointer;
-  transition:
-    transform 0.28s var(--ease-soft),
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.gallery__add:hover:not(:disabled),
-.gallery__add:focus-visible {
-  border-color: rgba(127, 81, 54, 0.36);
-  background: rgba(255, 254, 249, 0.98);
-  box-shadow:
-    0 13px 27px rgba(71, 43, 26, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  transform: translateY(-2px);
-}
-
-.gallery__add:focus-visible {
-  outline: 2px dashed rgba(84, 56, 42, 0.5);
-  outline-offset: 3px;
-}
-
-.gallery__add:disabled {
-  cursor: wait;
-  opacity: 0.56;
-  transform: none;
-}
-
-.gallery__file {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  border: 0;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.gallery__notice {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(4.2rem, 6.9vh, 5.4rem);
-  z-index: 5;
-  max-width: min(24rem, 76%);
-  margin: 0;
-  padding: 0.5rem 0.82rem 0.55rem;
-  border: 1px solid rgba(95, 63, 46, 0.14);
-  border-radius: 999px;
-  background: rgba(255, 252, 245, 0.94);
-  box-shadow: 0 9px 24px rgba(58, 36, 23, 0.16);
-  color: rgba(76, 50, 38, 0.84);
-  font-size: clamp(0.62rem, 0.8vw, 0.74rem);
-  letter-spacing: 0.04em;
-  line-height: 1.35;
-  text-align: center;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, 7px);
-  transition:
-    opacity 0.22s ease,
-    transform 0.28s var(--ease-soft);
-}
-
-.gallery__notice.is-visible {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
-
 .gallery__close,
 .gallery__nav {
   display: inline-grid;
@@ -886,22 +762,8 @@ button {
   box-shadow: inset 17px 0 28px -27px rgba(80, 48, 31, 0.28);
 }
 
-.gallery-page:empty::after {
-  position: absolute;
-  inset: 18% 12% auto;
-  margin: 0;
-  color: rgba(99, 69, 52, 0.38);
-  content: "这一页还空着，点右下角添加一张照片吧。";
-  font-size: clamp(0.7rem, 0.9vw, 0.84rem);
-  letter-spacing: 0.06em;
-  line-height: 1.7;
-  text-align: center;
-}
-
 .polaroid {
   --tilt: 0deg;
-  --drag-x: 0px;
-  --drag-y: 0px;
   --jig-x: 0px;
   --jig-y: 0px;
   --lift-y: 0px;
@@ -921,12 +783,12 @@ button {
   box-shadow:
     0 11px 22px rgba(59, 37, 23, 0.17),
     0 2px 5px rgba(59, 37, 23, 0.1);
-  cursor: grab;
-  touch-action: none;
+  cursor: pointer;
+  touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
   transform-origin: 50% 56%;
-  transform: translate3d(calc(var(--drag-x) + var(--jig-x)), calc(var(--drag-y) + var(--lift-y) + var(--jig-y)), 0) rotate(var(--tilt)) scale(var(--scale));
+  transform: translate3d(var(--jig-x), calc(var(--lift-y) + var(--jig-y)), 0) rotate(var(--tilt)) scale(var(--scale));
   transition:
     transform 0.35s var(--ease-soft),
     box-shadow 0.35s ease;
@@ -1013,67 +875,9 @@ button {
     0 3px 7px rgba(59, 37, 23, 0.11);
 }
 
-.polaroid.is-dragging {
-  z-index: 8;
-  --lift-y: -7px;
-  --scale: 1.04;
-  cursor: grabbing;
-  box-shadow:
-    0 26px 42px rgba(59, 37, 23, 0.25),
-    0 5px 12px rgba(59, 37, 23, 0.14);
-  transition: none;
-}
-
-.polaroid.is-dragging .polaroid__delete {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.polaroid__delete {
-  position: absolute;
-  top: -0.58rem;
-  right: -0.58rem;
-  z-index: 6;
-  display: grid;
-  width: 1.72rem;
-  height: 1.72rem;
-  padding: 0 0 0.08rem;
-  border: 2px solid rgba(255, 252, 245, 0.95);
-  border-radius: 50%;
-  background: #d45a54;
-  box-shadow:
-    0 7px 16px rgba(92, 38, 31, 0.26),
-    0 2px 4px rgba(92, 38, 31, 0.16);
-  color: #fffaf3;
-  font-size: 1.08rem;
-  line-height: 1;
-  place-items: center;
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(4px) scale(0.82);
-  transition:
-    opacity 0.2s ease,
-    transform 0.24s var(--ease-soft),
-    background-color 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.polaroid:hover .polaroid__delete,
-.polaroid:focus-within .polaroid__delete {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0) scale(1);
-}
-
-.polaroid__delete:hover,
-.polaroid__delete:focus-visible {
-  background: #c5443e;
-  transform: translateY(-1px) scale(1.08) !important;
-}
-
-.polaroid__delete:focus-visible {
-  outline: 2px dashed rgba(125, 47, 42, 0.58);
+.polaroid:focus-visible {
+  z-index: 3;
+  outline: 2px dashed rgba(104, 72, 51, 0.52);
   outline-offset: 3px;
 }
 
@@ -1205,10 +1009,6 @@ button {
 .photo-preview__card:focus-within {
   --lift-y: 0px;
   --scale: 1;
-}
-
-.photo-preview__card .polaroid__delete {
-  display: none;
 }
 
 .photo-preview__card .polaroid__caption {
@@ -2903,20 +2703,6 @@ button {
     font-size: 1.2rem;
   }
 
-  .gallery__add {
-    right: 0.48rem;
-    bottom: 3.25rem;
-    min-height: 2rem;
-    padding: 0.45rem 0.7rem 0.5rem;
-    font-size: 0.64rem;
-  }
-
-  .gallery__notice {
-    bottom: 5.6rem;
-    max-width: 82%;
-    font-size: 0.62rem;
-  }
-
   .gallery__spread {
     grid-template-columns: 1fr;
     grid-auto-rows: max-content;
@@ -2952,7 +2738,7 @@ button {
     left: auto;
     width: 100%;
     grid-column: auto;
-    transform: translate3d(var(--drag-x), calc(var(--drag-y) + var(--lift-y)), 0) rotate(var(--tilt)) scale(var(--scale));
+    transform: translate3d(0, var(--lift-y), 0) rotate(var(--tilt)) scale(var(--scale));
   }
 
   .gallery-page[data-count="1"] .polaroid {
@@ -2979,14 +2765,6 @@ button {
   .gallery__page-status {
     min-width: 6rem;
     font-size: 0.72rem;
-  }
-
-  .polaroid__delete {
-    top: -0.48rem;
-    right: -0.48rem;
-    width: 1.62rem;
-    height: 1.62rem;
-    font-size: 1rem;
   }
 
   .profile-card {
@@ -3114,24 +2892,12 @@ button {
 }
 
 @media (hover: none) {
-  .polaroid__delete {
-    opacity: 0.94;
-    pointer-events: auto;
-    transform: none;
-  }
-
   .video-progress__thumb {
     opacity: 1;
   }
 }
 
 @media (max-width: 768px) {
-  .gallery__add,
-  .gallery__reset,
-  .polaroid__delete {
-    display: none;
-  }
-
   .polaroid {
     cursor: pointer;
     touch-action: manipulation;
@@ -3246,9 +3012,6 @@ button {
   .intro__arrow,
   .desk-item__art,
   .desk-hint,
-  .gallery__add,
-  .gallery__notice,
-  .polaroid__delete,
     .photo-preview::after,
     .video-back,
     .video-play,

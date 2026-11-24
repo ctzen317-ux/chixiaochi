@@ -28,11 +28,7 @@
   const galleryPageStatus = document.getElementById('galleryPageStatus');
   const galleryPrev = document.getElementById('galleryPrev');
   const galleryNext = document.getElementById('galleryNext');
-  const galleryReset = document.getElementById('galleryReset');
   const galleryClose = document.getElementById('galleryClose');
-  const galleryAdd = document.getElementById('galleryAdd');
-  const galleryFile = document.getElementById('galleryFile');
-  const galleryNotice = document.getElementById('galleryNotice');
   const photoPreviewView = document.getElementById('photoPreview');
   const photoPreviewBackdrop = document.getElementById('photoPreviewBackdrop');
   const photoPreviewStage = document.getElementById('photoPreviewStage');
@@ -102,11 +98,7 @@
     !galleryPageStatus ||
     !galleryPrev ||
     !galleryNext ||
-    !galleryReset ||
     !galleryClose ||
-    !galleryAdd ||
-    !galleryFile ||
-    !galleryNotice ||
     !photoPreviewView ||
     !photoPreviewBackdrop ||
     !photoPreviewStage ||
@@ -234,18 +226,11 @@
       number,
       fallbackSrc: number === 1 ? 'works-photo/phot2.jpg' : '',
       tilt: Math.round((fraction * 10 - 5) * 10) / 10,
-      isCustom: false,
     };
   });
-  const galleryLayoutStorageKey = 'liudanchi-gallery-layout-v2';
-  const galleryLibraryStorageKey = 'liudanchi-gallery-library-v2';
-  const polaroidStates = new WeakMap();
-  const polaroidDragBound = new WeakSet();
-  const galleryMobileMedia = window.matchMedia('(max-width: 768px)');
-  let galleryLibrary = readGalleryLibrary();
-  let galleryLayout = readGalleryLayout();
-  let galleryCategories = buildGalleryCategories();
-  let galleryPages = buildGalleryPages();
+  const polaroidRotations = new WeakMap();
+  const galleryCategories = buildGalleryCategories();
+  const galleryPages = buildGalleryPages();
 
   let scene = 'front';
   let busy = false;
@@ -255,12 +240,9 @@
   let wheelResetTimer = 0;
   let resizeFrame = 0;
   let galleryPageIndex = 0;
-  let polaroidLayoutFrame = 0;
   let galleryOpen = false;
   let galleryBusy = false;
-  let polaroidDragState = null;
   let lastGalleryTrigger = null;
-  let galleryNoticeTimer = 0;
   let photoPreviewOpen = false;
   let photoPreviewBusy = false;
   let photoPreviewTrigger = null;
@@ -309,134 +291,21 @@
     item.style.setProperty('--y', `${state.y.toFixed(2)}px`);
   }
 
-  function readGalleryLayout() {
-    try {
-      const stored = window.localStorage.getItem(galleryLayoutStorageKey);
-      if (!stored) {
-        return {};
-      }
-
-      const parsed = JSON.parse(stored);
-      const storedPhotos = parsed && typeof parsed === 'object' ? parsed.photos || parsed : null;
-      return storedPhotos && typeof storedPhotos === 'object' && !Array.isArray(storedPhotos)
-        ? storedPhotos
-        : {};
-    } catch {
-      return {};
-    }
-  }
-
-  function writeGalleryLayout() {
-    try {
-      window.localStorage.setItem(
-        galleryLayoutStorageKey,
-        JSON.stringify({ version: 1, photos: galleryLayout }),
-      );
-    } catch {
-      // The gallery still works when storage is unavailable.
-    }
-  }
-
-  function readGalleryLibrary() {
-    const fallback = { version: 1, deleted: [], added: [] };
-
-    try {
-      const stored = window.localStorage.getItem(galleryLibraryStorageKey);
-      if (!stored) {
-        return fallback;
-      }
-
-      const parsed = JSON.parse(stored);
-      if (!parsed || typeof parsed !== 'object') {
-        return fallback;
-      }
-
-      const deleted = Array.isArray(parsed.deleted)
-        ? Array.from(new Set(parsed.deleted
-          .filter((value) => typeof value === 'string' || typeof value === 'number')
-          .map((value) => String(value))))
-        : [];
-      const seenIds = new Set();
-      const added = Array.isArray(parsed.added)
-        ? parsed.added.filter((photo) => {
-          if (
-            !photo ||
-            typeof photo !== 'object' ||
-            typeof photo.id !== 'string' ||
-            !photo.id ||
-            typeof photo.src !== 'string' ||
-            !photo.src.startsWith('data:image/') ||
-            seenIds.has(photo.id)
-          ) {
-            return false;
-          }
-
-          seenIds.add(photo.id);
-          return true;
-        }).map((photo, index) => {
-          const page = Number(photo.page);
-          const tilt = Number(photo.tilt);
-          const format = photoFormats.some((item) => item.key === photo.format)
-            ? photo.format
-            : photoFormats[index % photoFormats.length].key;
-
-          return {
-            id: photo.id,
-            src: photo.src,
-            page: Number.isFinite(page)
-              ? Math.max(0, Math.min(Math.trunc(page), galleryCategoryDefinitions.length - 1))
-              : 0,
-            tilt: Number.isFinite(tilt) ? Math.max(-8, Math.min(tilt, 8)) : 0,
-            format,
-            createdAt: Number(photo.createdAt) || 0,
-          };
-        })
-        : [];
-
-      return { version: 1, deleted, added };
-    } catch {
-      return fallback;
-    }
-  }
-
-  function writeGalleryLibrary() {
-    window.localStorage.setItem(galleryLibraryStorageKey, JSON.stringify({
-      version: 1,
-      deleted: galleryLibrary.deleted,
-      added: galleryLibrary.added,
-    }));
-  }
-
   function buildGalleryCategories() {
-    const deletedPhotoIds = new Set(galleryLibrary.deleted);
-
     return galleryCategoryDefinitions.map((category, categoryIndex) => {
       const formats = createFormatOrder((categoryIndex + 1) * 97 + category.start);
       const categoryPhotos = builtInPhotos
-        .filter((photo) => (
-          photo.number >= category.start &&
-          photo.number <= category.end &&
-          !deletedPhotoIds.has(photo.id)
-        ))
+        .filter((photo) => photo.number >= category.start && photo.number <= category.end)
         .map((photo) => ({
           ...photo,
           categoryIndex,
           format: formats[(photo.number - category.start) % formats.length],
         }));
-      const addedPhotos = galleryLibrary.added
-        .filter((photo) => photo.page === categoryIndex)
-        .map((photo) => ({
-          ...photo,
-          categoryIndex,
-          number: null,
-          format: { key: photo.format },
-          isCustom: true,
-        }));
 
       return {
         title: category.title,
         photosPerSpread: category.photosPerSpread,
-        photos: [...categoryPhotos, ...addedPhotos],
+        photos: categoryPhotos,
       };
     });
   }
@@ -463,297 +332,23 @@
     return pages;
   }
 
-  function showGalleryNotice(message) {
-    window.clearTimeout(galleryNoticeTimer);
-    galleryNotice.textContent = message;
-    galleryNotice.classList.add('is-visible');
-    galleryNoticeTimer = window.setTimeout(() => {
-      galleryNotice.classList.remove('is-visible');
-    }, 2800);
-  }
-
-  function applyPolaroidPosition(card, state) {
-    card.style.setProperty('--drag-x', `${state.x.toFixed(2)}px`);
-    card.style.setProperty('--drag-y', `${state.y.toFixed(2)}px`);
-  }
-
-  function keepPolaroidInside(card, state) {
-    const spreadRect = gallerySpread.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-
-    if (spreadRect.width <= 0 || spreadRect.height <= 0 || cardRect.width <= 0 || cardRect.height <= 0) {
-      return;
-    }
-
-    const inset = Math.max(4, Math.min(12, spreadRect.width * 0.012));
-    const leftEdge = spreadRect.left + inset;
-    const rightEdge = spreadRect.right - inset;
-    const topEdge = spreadRect.top + inset;
-    const bottomEdge = spreadRect.bottom - inset;
-    let shiftX = 0;
-    let shiftY = 0;
-
-    if (cardRect.left < leftEdge) {
-      shiftX += leftEdge - cardRect.left;
-    }
-    if (cardRect.right > rightEdge) {
-      shiftX -= cardRect.right - rightEdge;
-    }
-    if (cardRect.top < topEdge) {
-      shiftY += topEdge - cardRect.top;
-    }
-    if (cardRect.bottom > bottomEdge) {
-      shiftY -= cardRect.bottom - bottomEdge;
-    }
-
-    if (shiftX !== 0 || shiftY !== 0) {
-      state.x += shiftX;
-      state.y += shiftY;
-      applyPolaroidPosition(card, state);
-    }
-  }
-
-  function savePolaroidPosition(card, state) {
-    const spreadRect = gallerySpread.getBoundingClientRect();
-    if (spreadRect.width <= 0 || spreadRect.height <= 0) {
-      return;
-    }
-
-    galleryLayout[card.dataset.photoId] = {
-      x: Number((state.x / spreadRect.width).toFixed(5)),
-      y: Number((state.y / spreadRect.height).toFixed(5)),
-      rotation: Number(state.rotation.toFixed(2)),
-    };
-    writeGalleryLayout();
-  }
-
-  function restorePolaroidLayout() {
-    const spreadWidth = gallerySpread.offsetWidth;
-    const spreadHeight = gallerySpread.offsetHeight;
-    gallerySpread.querySelectorAll('.polaroid').forEach((card) => {
-      const state = polaroidStates.get(card);
-      if (!state) {
-        return;
-      }
-
-      state.x = spreadWidth > 0 ? state.savedX * spreadWidth : 0;
-      state.y = spreadHeight > 0 ? state.savedY * spreadHeight : 0;
-      applyPolaroidPosition(card, state);
-    });
-  }
-
-  function schedulePolaroidLayoutRestore() {
-    if (polaroidLayoutFrame) {
-      return;
-    }
-
-    polaroidLayoutFrame = window.requestAnimationFrame(() => {
-      polaroidLayoutFrame = 0;
-      if (galleryOpen && !polaroidDragState && !photoPreviewOpen) {
-        restorePolaroidLayout();
-      }
-    });
-  }
-
-  function isPolaroidVisible(card) {
-    const spreadRect = gallerySpread.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    return cardRect.bottom > spreadRect.top && cardRect.top < spreadRect.bottom;
-  }
-
-  function isGalleryMobileView() {
-    return galleryMobileMedia.matches;
-  }
-
-  function finishPolaroidDrag(pointerId, shouldSave, allowPreview = false) {
-    const currentDrag = polaroidDragState;
-    if (!currentDrag || (pointerId !== undefined && currentDrag.pointerId !== pointerId)) {
-      return;
-    }
-
-    const { card } = currentDrag;
-    const state = polaroidStates.get(card);
-    const openPreview = allowPreview && !currentDrag.active;
-    polaroidDragState = null;
-
-    if (state && shouldSave && currentDrag.active) {
-      keepPolaroidInside(card, state);
-      savePolaroidPosition(card, state);
-    }
-
-    card.classList.remove('is-dragging');
-    card.style.zIndex = '';
-
-    if (card.hasPointerCapture && card.hasPointerCapture(currentDrag.pointerId)) {
-      card.releasePointerCapture(currentDrag.pointerId);
-    }
-
-    if (openPreview) {
-      openPhotoPreview(card);
-    }
-  }
-
   function bindPolaroidPreview(card) {
-    card.addEventListener('click', (event) => {
-      if (
-        !isGalleryMobileView() ||
-        !galleryOpen ||
-        galleryBusy ||
-        photoPreviewOpen ||
-        polaroidDragState ||
-        (event.target instanceof Element && event.target.closest('.polaroid__delete'))
-      ) {
+    const openPreview = (event) => {
+      if (!galleryOpen || galleryBusy || photoPreviewOpen) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
       openPhotoPreview(card);
+    };
+
+    card.addEventListener('click', openPreview);
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        openPreview(event);
+      }
     });
-  }
-
-  function bindPolaroidDrag(card) {
-    if (isGalleryMobileView() || polaroidDragBound.has(card)) {
-      return;
-    }
-
-    polaroidDragBound.add(card);
-    card.addEventListener('pointerdown', (event) => {
-      if (
-        isGalleryMobileView() ||
-        !galleryOpen ||
-        galleryBusy ||
-        photoPreviewOpen ||
-        polaroidDragState ||
-        (event.pointerType === 'mouse' && event.button !== 0)
-      ) {
-        return;
-      }
-
-      const state = polaroidStates.get(card);
-      if (!state) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      polaroidDragState = {
-        card,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        baseX: state.x,
-        baseY: state.y,
-        active: false,
-      };
-
-      card.setPointerCapture(event.pointerId);
-    });
-
-    card.addEventListener('pointermove', (event) => {
-      if (!polaroidDragState || polaroidDragState.card !== card || polaroidDragState.pointerId !== event.pointerId) {
-        return;
-      }
-
-      if (isGalleryMobileView()) {
-        finishPolaroidDrag(event.pointerId, false);
-        return;
-      }
-
-      const state = polaroidStates.get(card);
-      if (!state) {
-        return;
-      }
-
-      event.preventDefault();
-      const deltaX = event.clientX - polaroidDragState.startX;
-      const deltaY = event.clientY - polaroidDragState.startY;
-      if (!polaroidDragState.active) {
-        if (Math.hypot(deltaX, deltaY) <= 6) {
-          return;
-        }
-
-        polaroidDragState.active = true;
-        card.classList.add('is-dragging');
-        card.style.zIndex = '8';
-      }
-
-      state.x = polaroidDragState.baseX + deltaX;
-      state.y = polaroidDragState.baseY + deltaY;
-      applyPolaroidPosition(card, state);
-      keepPolaroidInside(card, state);
-    });
-
-    card.addEventListener('pointerup', (event) => finishPolaroidDrag(event.pointerId, true, true));
-    card.addEventListener('pointercancel', (event) => finishPolaroidDrag(event.pointerId, true));
-    card.addEventListener('lostpointercapture', (event) => finishPolaroidDrag(event.pointerId, true));
-  }
-
-  function syncPolaroidInteractionMode() {
-    if (isGalleryMobileView() && polaroidDragState) {
-      finishPolaroidDrag(polaroidDragState.pointerId, false);
-    }
-
-    if (!isGalleryMobileView()) {
-      gallerySpread.querySelectorAll('.polaroid').forEach((card) => bindPolaroidDrag(card));
-    }
-  }
-
-  function resetGalleryLayout() {
-    if (isGalleryMobileView()) {
-      return;
-    }
-
-    if (polaroidDragState) {
-      finishPolaroidDrag(polaroidDragState.pointerId, false);
-    }
-
-    galleryLayout = {};
-    try {
-      window.localStorage.removeItem(galleryLayoutStorageKey);
-    } catch {
-      // Ignore unavailable storage and still reset the current page.
-    }
-
-    gallerySpread.querySelectorAll('.polaroid').forEach((card) => {
-      const state = polaroidStates.get(card);
-      if (!state) {
-        return;
-      }
-
-      state.x = 0;
-      state.y = 0;
-      state.savedX = 0;
-      state.savedY = 0;
-      state.rotation = state.originalRotation;
-      card.style.setProperty('--tilt', `${state.rotation}deg`);
-      applyPolaroidPosition(card, state);
-    });
-  }
-
-  function findPolaroidCard(photoId) {
-    return Array.from(gallerySpread.querySelectorAll('.polaroid'))
-      .find((card) => card.dataset.photoId === photoId) || null;
-  }
-
-  function centerPolaroidInSpread(card) {
-    const state = polaroidStates.get(card);
-    if (!state) {
-      return;
-    }
-
-    const spreadRect = gallerySpread.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    if (spreadRect.width <= 0 || spreadRect.height <= 0 || cardRect.width <= 0 || cardRect.height <= 0) {
-      return;
-    }
-
-    state.x += (spreadRect.left + spreadRect.width / 2) - (cardRect.left + cardRect.width / 2);
-    state.y += (spreadRect.top + spreadRect.height / 2) - (cardRect.top + cardRect.height / 2);
-    applyPolaroidPosition(card, state);
-    keepPolaroidInside(card, state);
-    savePolaroidPosition(card, state);
   }
 
   function finishPhotoPreviewClose() {
@@ -795,8 +390,8 @@
 
     const card = photoPreviewTrigger;
     const clone = photoPreviewCard;
-    const state = polaroidStates.get(card);
-    if (!state || !card.isConnected) {
+    const rotation = polaroidRotations.get(card);
+    if (rotation === undefined || !card.isConnected) {
       finishPhotoPreviewClose();
       return;
     }
@@ -821,7 +416,7 @@
         x: targetX,
         y: targetY,
         scale: 1,
-        rotation: state.rotation,
+        rotation,
         duration: 0.5,
         ease: 'power3.inOut',
       }, 0)
@@ -837,8 +432,8 @@
       return;
     }
 
-    const state = polaroidStates.get(card);
-    if (!state) {
+    const rotation = polaroidRotations.get(card);
+    if (rotation === undefined) {
       return;
     }
 
@@ -862,21 +457,20 @@
     const deltaY = targetCenterY - startCenterY;
     const clone = card.cloneNode(true);
 
-    clone.classList.remove('is-dragging', 'is-previewing');
+    clone.classList.remove('is-previewing');
     clone.classList.add('photo-preview__card');
     clone.removeAttribute('data-photo-id');
+    clone.removeAttribute('tabindex');
+    clone.removeAttribute('role');
     clone.setAttribute('aria-hidden', 'true');
-    clone.querySelectorAll('.polaroid__delete').forEach((button) => button.remove());
-    clone.style.setProperty('--drag-x', '0px');
-    clone.style.setProperty('--drag-y', '0px');
     clone.style.setProperty('--lift-y', '0px');
     clone.style.setProperty('--scale', '1');
-    clone.style.setProperty('--tilt', `${state.rotation}deg`);
+    clone.style.setProperty('--tilt', `${rotation}deg`);
     clone.style.left = `${startCenterX - baseWidth / 2}px`;
     clone.style.top = `${startCenterY - baseHeight / 2}px`;
     clone.style.width = `${baseWidth}px`;
     clone.style.height = `${baseHeight}px`;
-    clone.style.transform = `translate3d(0px, 0px, 0) rotate(${state.rotation}deg) scale(${currentScale})`;
+    clone.style.transform = `translate3d(0px, 0px, 0) rotate(${rotation}deg) scale(${currentScale})`;
 
     photoPreviewStage.replaceChildren(clone);
     photoPreviewTrigger = card;
@@ -901,7 +495,7 @@
     photoPreviewBusy = true;
     gsap.killTweensOf([photoPreviewView, clone]);
     gsap.set(photoPreviewView, { autoAlpha: 0 });
-    gsap.set(clone, { x: 0, y: 0, scale: currentScale, rotation: state.rotation });
+    gsap.set(clone, { x: 0, y: 0, scale: currentScale, rotation });
     gsap.timeline({
       onComplete: () => {
         photoPreviewBusy = false;
@@ -920,234 +514,6 @@
         duration: 0.58,
         ease: 'power3.inOut',
       }, 0.02);
-  }
-
-  function deleteGalleryPhoto(photo, card) {
-    if (
-      isGalleryMobileView() ||
-      !galleryOpen ||
-      galleryBusy ||
-      polaroidDragState ||
-      photoPreviewOpen ||
-      !card.isConnected
-    ) {
-      return;
-    }
-
-    const category = galleryCategories[photo.categoryIndex];
-    if (!category || !category.photos.some((item) => item.id === photo.id)) {
-      return;
-    }
-
-    const previousLibrary = galleryLibrary;
-    const previousLayout = galleryLayout[photo.id];
-    const nextDeleted = photo.isCustom
-      ? [...galleryLibrary.deleted]
-      : Array.from(new Set([...galleryLibrary.deleted, photo.id]));
-    const nextAdded = photo.isCustom
-      ? galleryLibrary.added.filter((item) => item.id !== photo.id)
-      : [...galleryLibrary.added];
-
-    galleryLibrary = { version: 1, deleted: nextDeleted, added: nextAdded };
-    delete galleryLayout[photo.id];
-
-    try {
-      writeGalleryLibrary();
-      writeGalleryLayout();
-    } catch {
-      galleryLibrary = previousLibrary;
-      if (previousLayout) {
-        galleryLayout[photo.id] = previousLayout;
-      }
-      showGalleryNotice('删除记录没有保存成功，请稍后再试。');
-      return;
-    }
-
-    category.photos = category.photos.filter((item) => item.id !== photo.id);
-    const shouldRefocus = card.contains(document.activeElement);
-    const deletionPageIndex = galleryPageIndex;
-    galleryBusy = true;
-    card.style.pointerEvents = 'none';
-
-    const finishRemoval = () => {
-      galleryPages = buildGalleryPages();
-      const targetPageIndex = Math.min(deletionPageIndex, galleryPages.length - 1);
-      renderGalleryPage(targetPageIndex);
-      galleryBusy = false;
-      if (shouldRefocus) {
-        galleryAdd.focus({ preventScroll: true });
-      }
-      showGalleryNotice('照片已从相册移除。');
-    };
-
-    if (!hasGSAP || reduceMotion) {
-      finishRemoval();
-      return;
-    }
-
-    gsap.to(card, {
-      opacity: 0,
-      scale: 0.84,
-      duration: 0.22,
-      ease: 'power2.in',
-      onComplete: finishRemoval,
-    });
-  }
-
-  function createCustomPhotoId() {
-    return `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  }
-
-  function loadImageElement(url) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.decoding = 'async';
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error('image-load'));
-      image.src = url;
-    });
-  }
-
-  async function prepareGalleryImage(file) {
-    if (!file || !(file.type.startsWith('image/') || /\.(?:avif|gif|jpe?g|png|webp)$/i.test(file.name))) {
-      throw new Error('not-image');
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-
-    try {
-      const image = await loadImageElement(objectUrl);
-      const sourceWidth = image.naturalWidth || image.width;
-      const sourceHeight = image.naturalHeight || image.height;
-      if (!sourceWidth || !sourceHeight) {
-        throw new Error('empty-image');
-      }
-
-      const maxSide = 1600;
-      const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(sourceWidth * scale));
-      canvas.height = Math.max(1, Math.round(sourceHeight * scale));
-      const context = canvas.getContext('2d');
-      if (!context) {
-        throw new Error('canvas-unavailable');
-      }
-
-      context.fillStyle = '#fffdf8';
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = 'high';
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-      let dataUrl = canvas.toDataURL('image/jpeg', 0.84);
-      if (dataUrl.length > 1200000) {
-        dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-      }
-      return dataUrl;
-    } finally {
-      URL.revokeObjectURL(objectUrl);
-    }
-  }
-
-  function animateNewPolaroid(card) {
-    if (!hasGSAP || reduceMotion) {
-      return;
-    }
-
-    card.style.zIndex = '10';
-    gsap.fromTo(card, {
-      '--scale': 0.74,
-      opacity: 0,
-    }, {
-      '--scale': 1,
-      opacity: 1,
-      duration: 0.52,
-      ease: 'back.out(1.35)',
-      onComplete: () => {
-        card.style.zIndex = '';
-        card.style.removeProperty('--scale');
-        gsap.set(card, { clearProps: 'opacity' });
-      },
-    });
-  }
-
-  async function addGalleryPhoto(file) {
-    if (isGalleryMobileView() || !file || !galleryOpen || galleryBusy || photoPreviewOpen) {
-      return;
-    }
-
-    const initialLabel = galleryAdd.textContent;
-    galleryBusy = true;
-    galleryAdd.disabled = true;
-    galleryAdd.textContent = '正在添加…';
-
-    try {
-      const src = await prepareGalleryImage(file);
-      const currentPage = galleryPages[galleryPageIndex];
-      const categoryIndex = currentPage ? currentPage.categoryIndex : 0;
-      const format = photoFormats[Math.floor(Math.random() * photoFormats.length)].key;
-      const record = {
-        id: createCustomPhotoId(),
-        src,
-        page: categoryIndex,
-        format,
-        tilt: Math.round((Math.random() * 5.2 - 2.6) * 10) / 10,
-        createdAt: Date.now(),
-      };
-      const previousLibrary = galleryLibrary;
-      galleryLibrary = {
-        version: 1,
-        deleted: [...galleryLibrary.deleted],
-        added: [...galleryLibrary.added, record],
-      };
-
-      try {
-        writeGalleryLibrary();
-      } catch {
-        galleryLibrary = previousLibrary;
-        throw new Error('storage-full');
-      }
-
-      const category = galleryCategories[categoryIndex];
-      category.photos.push({
-        ...record,
-        categoryIndex,
-        number: null,
-        format: { key: record.format },
-        isCustom: true,
-      });
-      galleryPages = buildGalleryPages();
-      const addedPageIndex = galleryPages.findIndex((page) => (
-        page.photos.some((item) => item.id === record.id)
-      ));
-      renderGalleryPage(addedPageIndex >= 0 ? addedPageIndex : galleryPageIndex);
-
-      const card = await new Promise((resolve) => {
-        window.requestAnimationFrame(() => resolve(findPolaroidCard(record.id)));
-      });
-      if (!card) {
-        throw new Error('render-failed');
-      }
-
-      if (window.matchMedia('(max-width: 760px)').matches) {
-        card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
-        await new Promise((resolve) => window.requestAnimationFrame(resolve));
-      }
-
-      centerPolaroidInSpread(card);
-      animateNewPolaroid(card);
-      showGalleryNotice('新照片已经贴进相册啦。');
-    } catch (error) {
-      if (error instanceof Error && error.message === 'storage-full') {
-        showGalleryNotice('浏览器存储空间不足，换一张小一点的照片试试。');
-      } else {
-        showGalleryNotice('这张图片没有读取成功，请换一张试试。');
-      }
-    } finally {
-      galleryBusy = false;
-      galleryAdd.disabled = false;
-      galleryAdd.textContent = initialLabel;
-    }
   }
 
   function createFormatOrder(seed) {
@@ -1186,41 +552,28 @@
     const photoFrame = document.createElement('div');
     const image = document.createElement('img');
     const caption = document.createElement('figcaption');
-    const deleteButton = document.createElement('button');
     const markLoaded = () => {
       image.classList.add('is-loaded');
-      schedulePolaroidLayoutRestore();
     };
-    const storedLayout = galleryLayout[photo.id];
-    const storedX = Number(storedLayout && storedLayout.x);
-    const storedY = Number(storedLayout && storedLayout.y);
-    const storedRotation = Number(storedLayout && storedLayout.rotation);
-    const rotation = Number.isFinite(storedRotation)
-      ? Math.max(-30, Math.min(30, storedRotation))
-      : photo.tilt;
+    const rotation = photo.tilt;
     const jitter = createPolaroidJitter(photo.id);
 
     card.className = 'polaroid';
     card.classList.add(`polaroid--${photo.format.key}`);
     card.dataset.photoId = photo.id;
-    card.dataset.photoNumber = photo.number === null ? photo.id : String(photo.number);
+    card.dataset.photoNumber = String(photo.number);
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `放大预览第 ${photo.number} 张照片`);
     card.style.setProperty('--tilt', `${rotation}deg`);
     card.style.setProperty('--jig-x', `${jitter.x}px`);
     card.style.setProperty('--jig-y', `${jitter.y}px`);
-    polaroidStates.set(card, {
-      x: 0,
-      y: 0,
-      rotation,
-      originalRotation: photo.tilt,
-      savedX: Number.isFinite(storedX) ? storedX : 0,
-      savedY: Number.isFinite(storedY) ? storedY : 0,
-    });
-    bindPolaroidDrag(card);
+    polaroidRotations.set(card, rotation);
     bindPolaroidPreview(card);
 
     photoFrame.className = 'polaroid__photo';
     image.className = 'polaroid__img';
-    image.alt = photo.isCustom ? '新添加的相册照片' : `相册照片 ${photo.number}`;
+    image.alt = `相册照片 ${photo.number}`;
     image.loading = 'eager';
     image.decoding = 'async';
     image.draggable = false;
@@ -1240,24 +593,9 @@
     }
 
     caption.className = 'polaroid__caption';
-    caption.textContent = photo.isCustom ? 'NEW' : `No. ${String(photo.number).padStart(2, '0')}`;
-    deleteButton.className = 'polaroid__delete';
-    deleteButton.type = 'button';
-    deleteButton.textContent = '×';
-    deleteButton.setAttribute(
-      'aria-label',
-      photo.isCustom ? '删除这张新照片' : `删除第 ${photo.number} 张照片`,
-    );
-    deleteButton.addEventListener('pointerdown', (event) => {
-      event.stopPropagation();
-    });
-    deleteButton.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      deleteGalleryPhoto(photo, card);
-    });
+    caption.textContent = `No. ${String(photo.number).padStart(2, '0')}`;
     photoFrame.append(image);
-    card.append(photoFrame, caption, deleteButton);
+    card.append(photoFrame, caption);
 
     return card;
   }
@@ -1277,7 +615,6 @@
     galleryRightPage.replaceChildren();
     leftPhotos.forEach((photo) => galleryLeftPage.appendChild(createPolaroid(photo)));
     rightPhotos.forEach((photo) => galleryRightPage.appendChild(createPolaroid(photo)));
-    restorePolaroidLayout();
     galleryLeftPage.dataset.count = String(leftPhotos.length);
     galleryRightPage.dataset.count = String(rightPhotos.length);
     galleryPageStatus.textContent = `第 ${galleryPageIndex + 1} / ${galleryPages.length} 页`;
@@ -1287,7 +624,7 @@
   }
 
   function turnGalleryPage(direction) {
-    if (!galleryOpen || galleryBusy || polaroidDragState || photoPreviewOpen) {
+    if (!galleryOpen || galleryBusy || photoPreviewOpen) {
       return;
     }
 
@@ -1346,7 +683,6 @@
     frontView.inert = true;
 
     window.requestAnimationFrame(() => {
-      restorePolaroidLayout();
       galleryClose.focus({ preventScroll: true });
     });
 
@@ -1425,10 +761,6 @@
   function closeGallery() {
     if (!galleryOpen || galleryBusy) {
       return;
-    }
-
-    if (polaroidDragState) {
-      finishPolaroidDrag(polaroidDragState.pointerId, true);
     }
 
     galleryBusy = true;
@@ -3244,12 +2576,6 @@
     }
   });
 
-  if (typeof galleryMobileMedia.addEventListener === 'function') {
-    galleryMobileMedia.addEventListener('change', syncPolaroidInteractionMode);
-  } else {
-    galleryMobileMedia.addListener(syncPolaroidInteractionMode);
-  }
-
   renderVideoEpisodes();
   renderLetterCategories();
   enterButton.addEventListener('click', enterDesk);
@@ -3500,22 +2826,6 @@
   galleryBackdrop.addEventListener('click', closeGallery);
   photoPreviewBackdrop.addEventListener('click', closePhotoPreview);
   galleryClose.addEventListener('click', closeGallery);
-  galleryReset.addEventListener('click', resetGalleryLayout);
-  galleryAdd.addEventListener('click', () => {
-    if (isGalleryMobileView() || !galleryOpen || galleryBusy) {
-      return;
-    }
-
-    galleryFile.value = '';
-    galleryFile.click();
-  });
-  galleryFile.addEventListener('change', async () => {
-    const [file] = galleryFile.files || [];
-    galleryFile.value = '';
-    if (file && !isGalleryMobileView()) {
-      await addGalleryPhoto(file);
-    }
-  });
   galleryPrev.addEventListener('click', () => turnGalleryPage(-1));
   galleryNext.addEventListener('click', () => turnGalleryPage(1));
   window.addEventListener('wheel', handleWheel, { passive: true });
@@ -3524,14 +2834,6 @@
     window.cancelAnimationFrame(resizeFrame);
     resizeFrame = window.requestAnimationFrame(() => {
       clampAllItems();
-      if (galleryOpen) {
-        gallerySpread.querySelectorAll('.polaroid').forEach((card) => {
-          const state = polaroidStates.get(card);
-          if (state && isPolaroidVisible(card)) {
-            keepPolaroidInside(card, state);
-          }
-        });
-      }
       if (letterOpen && !letterBusy) {
         const size = letterReading ? letterReadSize() : letterPeekSize();
         if (hasGSAP) {
