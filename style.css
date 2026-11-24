@@ -31,6 +31,131 @@ button {
   font: inherit;
 }
 
+.rotate-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 4vw, 1.6rem);
+  padding:
+    max(2rem, env(safe-area-inset-top))
+    max(1.35rem, env(safe-area-inset-right))
+    max(2rem, env(safe-area-inset-bottom))
+    max(1.35rem, env(safe-area-inset-left));
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 253, 246, 0.96), rgba(255, 249, 238, 0.52) 36%, transparent 64%),
+    linear-gradient(145deg, #f7ecdb 0%, #f1e0c9 56%, #ead4ba 100%);
+  color: #5d4134;
+  text-align: center;
+  text-rendering: optimizeLegibility;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rotate-prompt::before {
+  position: absolute;
+  inset: clamp(0.75rem, 3vw, 1.25rem);
+  border: 1px dashed rgba(113, 78, 58, 0.22);
+  border-radius: clamp(1.25rem, 6vw, 2.2rem);
+  content: "";
+  pointer-events: none;
+}
+
+.rotate-prompt::after {
+  position: absolute;
+  top: -22%;
+  left: 50%;
+  z-index: -1;
+  width: min(82vw, 25rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.58), transparent 68%);
+  content: "";
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.rotate-prompt__icon {
+  position: relative;
+  display: grid;
+  width: clamp(5.4rem, 24vw, 7rem);
+  aspect-ratio: 1;
+  place-items: center;
+}
+
+.rotate-prompt__phone {
+  position: relative;
+  display: block;
+  width: 40%;
+  height: 68%;
+  border: 2px solid rgba(78, 53, 42, 0.82);
+  border-radius: 24% / 14%;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(249, 235, 216, 0.92));
+  box-shadow:
+    0 12px 22px rgba(100, 67, 46, 0.18),
+    inset 0 0 0 2px rgba(255, 253, 247, 0.7);
+  transform-origin: 50% 50%;
+  animation: rotate-phone-hint 3.6s var(--ease-soft) infinite;
+}
+
+.rotate-prompt__phone::before {
+  position: absolute;
+  top: 7%;
+  left: 50%;
+  width: 34%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(94, 65, 50, 0.34);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.rotate-prompt__phone::after {
+  position: absolute;
+  bottom: 7%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border: 1px solid rgba(94, 65, 50, 0.34);
+  border-radius: 50%;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.rotate-prompt__turn {
+  position: absolute;
+  right: 2%;
+  bottom: 4%;
+  display: grid;
+  width: clamp(1.55rem, 7vw, 2rem);
+  height: clamp(1.55rem, 7vw, 2rem);
+  border: 1px solid rgba(255, 250, 241, 0.72);
+  border-radius: 50%;
+  background: #c68d64;
+  box-shadow: 0 6px 14px rgba(104, 66, 43, 0.2);
+  color: #fffaf2;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(0.95rem, 4.4vw, 1.24rem);
+  line-height: 1;
+  place-items: center;
+}
+
+.rotate-prompt__text {
+  max-width: 9.5em;
+  margin: 0;
+  color: #5b3e32;
+  font-family: var(--font-cute);
+  font-size: clamp(1.18rem, 5.2vw, 1.5rem);
+  letter-spacing: 0.075em;
+  line-height: 1.65;
+  text-shadow: 0 2px 9px rgba(255, 252, 245, 0.75);
+}
+
 .experience {
   position: fixed;
   inset: 0;
@@ -3000,6 +3125,53 @@ button {
   }
 }
 
+@media (max-width: 768px) {
+  .gallery__add,
+  .gallery__reset,
+  .polaroid__delete {
+    display: none;
+  }
+
+  .polaroid {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .rotate-prompt {
+    display: flex;
+    animation: rotate-prompt-in 0.42s var(--ease-soft) both;
+  }
+}
+
+@keyframes rotate-phone-hint {
+  0%,
+  18% {
+    transform: rotate(0deg);
+  }
+
+  48%,
+  68% {
+    transform: rotate(90deg);
+  }
+
+  92%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes rotate-prompt-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-height: 680px) and (min-width: 761px) {
   .intro__name {
     font-size: clamp(5.4rem, min(12.8vw, 17vh), 11rem);
@@ -3106,5 +3278,14 @@ button {
   .js.is-fallback .scene {
     transition-duration: 0.01ms;
     transition-delay: 0ms;
+  }
+
+  .rotate-prompt {
+    animation: none;
+  }
+
+  .rotate-prompt__phone {
+    animation: none;
+    transform: rotate(90deg);
   }
 }

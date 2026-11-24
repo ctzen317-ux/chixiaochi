@@ -198,11 +198,12 @@
   ];
   const videoWorks = [
     { category: '剪辑作品', title: '剪辑作品', src: 'works-video/Editing-Works-LEDscreenad.mp4' },
-    { category: '导演作品', title: '导演作品', src: 'works-video/Directorial-Works-C.mp4' },
+    { category: '剪辑作品', title: '剪辑作品2', src: 'works-video/Editing-Works-yesoryeslyrics.mp4' },
+    { category: '导演作品', title: '导演作品', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/Directorialworks-C.mp4' },
     { category: 'C4D动画作品', title: 'C4D动画作品', src: 'works-video/C4D-Animation-Works-windchimes.mp4' },
     { category: '广告作品', title: '广告作品1', src: 'works-video/ad-happy-snap.mp4' },
-    { category: '广告作品', title: '广告作品2', src: 'works-video/ad-watermelonfrost.mp4' },
-    { category: '电视新闻专题作品', title: '电视新闻专题作品', src: 'works-video/news-feature-Rolling.mp4' },
+    { category: '广告作品', title: '广告作品2', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/Ad-Watermelonfrost.mp4' },
+    { category: '电视新闻专题作品', title: '电视新闻专题作品', src: 'https://ldc-portfolio-1540146891.cos.ap-chongqing.myqcloud.com/News-Feature-Rolling.mp4' },
   ];
   const letterWorks = [
     {
@@ -239,6 +240,8 @@
   const galleryLayoutStorageKey = 'liudanchi-gallery-layout-v2';
   const galleryLibraryStorageKey = 'liudanchi-gallery-library-v2';
   const polaroidStates = new WeakMap();
+  const polaroidDragBound = new WeakSet();
+  const galleryMobileMedia = window.matchMedia('(max-width: 768px)');
   let galleryLibrary = readGalleryLibrary();
   let galleryLayout = readGalleryLayout();
   let galleryCategories = buildGalleryCategories();
@@ -558,6 +561,10 @@
     return cardRect.bottom > spreadRect.top && cardRect.top < spreadRect.bottom;
   }
 
+  function isGalleryMobileView() {
+    return galleryMobileMedia.matches;
+  }
+
   function finishPolaroidDrag(pointerId, shouldSave, allowPreview = false) {
     const currentDrag = polaroidDragState;
     if (!currentDrag || (pointerId !== undefined && currentDrag.pointerId !== pointerId)) {
@@ -586,9 +593,34 @@
     }
   }
 
+  function bindPolaroidPreview(card) {
+    card.addEventListener('click', (event) => {
+      if (
+        !isGalleryMobileView() ||
+        !galleryOpen ||
+        galleryBusy ||
+        photoPreviewOpen ||
+        polaroidDragState ||
+        (event.target instanceof Element && event.target.closest('.polaroid__delete'))
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      openPhotoPreview(card);
+    });
+  }
+
   function bindPolaroidDrag(card) {
+    if (isGalleryMobileView() || polaroidDragBound.has(card)) {
+      return;
+    }
+
+    polaroidDragBound.add(card);
     card.addEventListener('pointerdown', (event) => {
       if (
+        isGalleryMobileView() ||
         !galleryOpen ||
         galleryBusy ||
         photoPreviewOpen ||
@@ -624,6 +656,11 @@
         return;
       }
 
+      if (isGalleryMobileView()) {
+        finishPolaroidDrag(event.pointerId, false);
+        return;
+      }
+
       const state = polaroidStates.get(card);
       if (!state) {
         return;
@@ -653,7 +690,21 @@
     card.addEventListener('lostpointercapture', (event) => finishPolaroidDrag(event.pointerId, true));
   }
 
+  function syncPolaroidInteractionMode() {
+    if (isGalleryMobileView() && polaroidDragState) {
+      finishPolaroidDrag(polaroidDragState.pointerId, false);
+    }
+
+    if (!isGalleryMobileView()) {
+      gallerySpread.querySelectorAll('.polaroid').forEach((card) => bindPolaroidDrag(card));
+    }
+  }
+
   function resetGalleryLayout() {
+    if (isGalleryMobileView()) {
+      return;
+    }
+
     if (polaroidDragState) {
       finishPolaroidDrag(polaroidDragState.pointerId, false);
     }
@@ -872,7 +923,14 @@
   }
 
   function deleteGalleryPhoto(photo, card) {
-    if (!galleryOpen || galleryBusy || polaroidDragState || photoPreviewOpen || !card.isConnected) {
+    if (
+      isGalleryMobileView() ||
+      !galleryOpen ||
+      galleryBusy ||
+      polaroidDragState ||
+      photoPreviewOpen ||
+      !card.isConnected
+    ) {
       return;
     }
 
@@ -1014,7 +1072,7 @@
   }
 
   async function addGalleryPhoto(file) {
-    if (!file || !galleryOpen || galleryBusy || photoPreviewOpen) {
+    if (isGalleryMobileView() || !file || !galleryOpen || galleryBusy || photoPreviewOpen) {
       return;
     }
 
@@ -1158,6 +1216,7 @@
       savedY: Number.isFinite(storedY) ? storedY : 0,
     });
     bindPolaroidDrag(card);
+    bindPolaroidPreview(card);
 
     photoFrame.className = 'polaroid__photo';
     image.className = 'polaroid__img';
@@ -3185,6 +3244,12 @@
     }
   });
 
+  if (typeof galleryMobileMedia.addEventListener === 'function') {
+    galleryMobileMedia.addEventListener('change', syncPolaroidInteractionMode);
+  } else {
+    galleryMobileMedia.addListener(syncPolaroidInteractionMode);
+  }
+
   renderVideoEpisodes();
   renderLetterCategories();
   enterButton.addEventListener('click', enterDesk);
@@ -3437,7 +3502,7 @@
   galleryClose.addEventListener('click', closeGallery);
   galleryReset.addEventListener('click', resetGalleryLayout);
   galleryAdd.addEventListener('click', () => {
-    if (!galleryOpen || galleryBusy) {
+    if (isGalleryMobileView() || !galleryOpen || galleryBusy) {
       return;
     }
 
@@ -3447,7 +3512,7 @@
   galleryFile.addEventListener('change', async () => {
     const [file] = galleryFile.files || [];
     galleryFile.value = '';
-    if (file) {
+    if (file && !isGalleryMobileView()) {
       await addGalleryPhoto(file);
     }
   });
