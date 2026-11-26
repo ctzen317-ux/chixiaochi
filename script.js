@@ -154,6 +154,7 @@
   const gsap = window.gsap;
   const hasGSAP = Boolean(gsap && typeof gsap.timeline === 'function');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const gallerySinglePageQuery = window.matchMedia('(max-width: 768px) and (orientation: portrait)');
   const items = Array.from(document.querySelectorAll('.desk-item'));
   const itemStates = new WeakMap();
   const nameText = nameTarget ? nameTarget.dataset.typewriter || nameTarget.textContent : '';
@@ -243,6 +244,8 @@
   let galleryOpen = false;
   let galleryBusy = false;
   let lastGalleryTrigger = null;
+  let gallerySwipeStart = null;
+  let gallerySwipeSuppressClickUntil = 0;
   let photoPreviewOpen = false;
   let photoPreviewBusy = false;
   let photoPreviewTrigger = null;
@@ -335,6 +338,10 @@
   function bindPolaroidPreview(card) {
     const openPreview = (event) => {
       if (!galleryOpen || galleryBusy || photoPreviewOpen) {
+        return;
+      }
+
+      if (event.type === 'click' && Date.now() < gallerySwipeSuppressClickUntil) {
         return;
       }
 
@@ -604,13 +611,16 @@
     const clampedPage = Math.max(0, Math.min(pageIndex, galleryPages.length - 1));
     const page = galleryPages[clampedPage];
     const pagePhotos = page.photos;
-    const leftCount = Math.ceil(pagePhotos.length / 2);
+    const singlePage = gallerySinglePageQuery.matches;
+    const leftCount = singlePage ? pagePhotos.length : Math.ceil(pagePhotos.length / 2);
     const leftPhotos = pagePhotos.slice(0, leftCount);
-    const rightPhotos = pagePhotos.slice(leftCount);
+    const rightPhotos = singlePage ? [] : pagePhotos.slice(leftCount);
 
     galleryPageIndex = clampedPage;
     gallerySpread.dataset.category = String(page.categoryIndex);
+    gallerySpread.dataset.layout = singlePage ? 'single' : 'spread';
     galleryTitle.textContent = page.title;
+    galleryLeftPage.setAttribute('aria-label', singlePage ? '相册页面' : '相册左页');
     galleryLeftPage.replaceChildren();
     galleryRightPage.replaceChildren();
     leftPhotos.forEach((photo) => galleryLeftPage.appendChild(createPolaroid(photo)));
@@ -639,7 +649,9 @@
     }
 
     galleryBusy = true;
-    const pages = [galleryLeftPage, galleryRightPage];
+    const pages = gallerySinglePageQuery.matches
+      ? [galleryLeftPage]
+      : [galleryLeftPage, galleryRightPage];
     gsap.to(pages, {
       opacity: 0,
       x: direction * -14,
@@ -665,6 +677,54 @@
         );
       },
     });
+  }
+
+  function handleGalleryTouchStart(event) {
+    if (!galleryOpen || galleryBusy || photoPreviewOpen || event.touches.length !== 1) {
+      gallerySwipeStart = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    gallerySwipeStart = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+  }
+
+  function handleGalleryTouchEnd(event) {
+    const start = gallerySwipeStart;
+    gallerySwipeStart = null;
+
+    if (!start || !galleryOpen || galleryBusy || photoPreviewOpen || !event.changedTouches.length) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.18) {
+      return;
+    }
+
+    gallerySwipeSuppressClickUntil = Date.now() + 500;
+    turnGalleryPage(deltaX < 0 ? 1 : -1);
+  }
+
+  function syncGalleryLayout() {
+    if (!galleryOpen || photoPreviewOpen) {
+      return;
+    }
+
+    const expectedLayout = gallerySinglePageQuery.matches ? 'single' : 'spread';
+    if (gallerySpread.dataset.layout !== expectedLayout) {
+      renderGalleryPage(galleryPageIndex);
+    }
+  }
+
+  function handleGalleryLayoutChange() {
+    window.setTimeout(syncGalleryLayout, 80);
   }
 
   function openGallery() {
@@ -2828,12 +2888,24 @@
   galleryClose.addEventListener('click', closeGallery);
   galleryPrev.addEventListener('click', () => turnGalleryPage(-1));
   galleryNext.addEventListener('click', () => turnGalleryPage(1));
+  gallerySpread.addEventListener('touchstart', handleGalleryTouchStart, { passive: true });
+  gallerySpread.addEventListener('touchend', handleGalleryTouchEnd, { passive: true });
+  gallerySpread.addEventListener('touchcancel', () => {
+    gallerySwipeStart = null;
+  }, { passive: true });
+  if (typeof gallerySinglePageQuery.addEventListener === 'function') {
+    gallerySinglePageQuery.addEventListener('change', handleGalleryLayoutChange);
+  } else if (typeof gallerySinglePageQuery.addListener === 'function') {
+    gallerySinglePageQuery.addListener(handleGalleryLayoutChange);
+  }
   window.addEventListener('wheel', handleWheel, { passive: true });
   window.addEventListener('keydown', handleKeydown);
   window.addEventListener('resize', () => {
+    syncGalleryLayout();
     window.cancelAnimationFrame(resizeFrame);
     resizeFrame = window.requestAnimationFrame(() => {
       clampAllItems();
+      syncGalleryLayout();
       if (letterOpen && !letterBusy) {
         const size = letterReading ? letterReadSize() : letterPeekSize();
         if (hasGSAP) {
